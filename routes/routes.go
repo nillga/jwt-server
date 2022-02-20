@@ -3,7 +3,6 @@ package routes
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -16,27 +15,65 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-var SecretKey = "no-secret, lol"
+type UserValidation struct {
+	Id string `json:"id"`
+	Valid bool `json:"valid"`
+}
+
+var (
+	SecretKey = "no-secret, lol"
+	InvalidUser = UserValidation{"-", false}
+)
 
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
-		// rip no post so lets deal with it
+	if InvalidMethod(w, r, "POST") {
+		return
 	}
 
 	var registerData map[string]string
 
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		// cope
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Failed reading request body."))
+		return
 	}
 
 	if err = json.Unmarshal(body, &registerData); err != nil {
-		// cope again
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(http.StatusText(http.StatusBadRequest)))
+		return
+	}
+
+	var bin interface{}
+
+	if err = database.Users.FindOne(context.TODO(), bson.D{
+		primitive.E{Key: "$or", Value:
+			bson.A {
+				bson.D {
+					primitive.E{Key: "name", Value: registerData["name"]},
+				},
+				bson.D {
+					primitive.E{Key: "email", Value: registerData["email"]},
+				},
+			},
+		},
+	}).Decode(&bin); err != mongo.ErrNoDocuments {
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(http.StatusText(http.StatusInternalServerError)))
+			return
+		}
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(http.StatusText(http.StatusBadRequest)))
+		return
 	}
 
 	password, err := bcrypt.GenerateFromPassword([]byte(registerData["password"]), 14)
 	if err != nil {
-		// cope yet another time
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(http.StatusText(http.StatusBadRequest)))
+		return
 	}
 
 	user := bson.D{
@@ -47,7 +84,9 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 
 	inserted, err := database.Users.InsertOne(context.TODO(), user)
 	if err != nil {
-		// handle
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Database error"))
+		return
 	}
 
 	obscureUser := struct {
@@ -62,7 +101,9 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 
 	obscureUserJSON, err := json.Marshal(obscureUser)
 	if err != nil {
-		// another handle
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Database error"))
+		return
 	}
 
 	w.Header().Add("Content-Type", "application/json")
@@ -70,40 +111,50 @@ func RegisterHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func LoginHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
-		// get off!
+	if InvalidMethod(w, r, "POST") {
+		return
 	}
 
 	var loginData map[string]string
 
 	body, err := ioutil.ReadAll(r.Body)
 	if err != nil {
-		// copium
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte("Failed reading request body."))
+		return
 	}
 
 	if err = json.Unmarshal(body, &loginData); err != nil {
-		// copium
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(http.StatusText(http.StatusBadRequest)))
+		return
 	}
 
 	var requested map[string]string
 
 	if err = database.Users.FindOne(context.TODO(), bson.D{
-		{"$and",
+		primitive.E{Key: "$and", Value:
 			bson.A {
 				bson.D {
-					{"name", loginData["name"]},
+					primitive.E{Key: "name", Value: loginData["name"]},
 				},
 			},
 		},
 	}).Decode(&requested); err != nil {
 		if err == mongo.ErrNoDocuments {
-			// user does not exist
+			w.WriteHeader(http.StatusBadRequest)
+			w.Write([]byte("User does not exist"))
+			return
 		}
-		// internal error
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(http.StatusText(http.StatusInternalServerError)))
+		return
 	}
 
 	if err = bcrypt.CompareHashAndPassword([]byte(requested["password"]), []byte(loginData["password"])); err != nil {
-		// wrong password KEKW
+		w.WriteHeader(http.StatusUnauthorized)
+		w.Write([]byte(http.StatusText(http.StatusUnauthorized)))
+		return
 	}
 
 	claims := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.StandardClaims{
@@ -113,7 +164,9 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 
 	token, err := claims.SignedString([]byte(SecretKey))
 	if err != nil {
-		// handle me
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Write([]byte(http.StatusText(http.StatusInternalServerError)))
+		return
 	}
 
 	cookie := &http.Cookie{
@@ -127,19 +180,22 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func ResolveUserHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "GET" {
-		// handle
+	if InvalidMethod(w, r, "GET") {
+		return
 	}
+
 	jwtCookie, err := r.Cookie("jwt")
 	if err != nil {
-		fmt.Println("No cookie")
+		ReturnInvalidUser(w, r)
+		return
 	}
 
 	token, err := jwt.ParseWithClaims(jwtCookie.Value, &jwt.StandardClaims{}, func(token *jwt.Token) (interface{}, error) {
 		return []byte(SecretKey), nil
 	})
 	if err != nil {
-		fmt.Println("Token parsing failed")
+		ReturnInvalidUser(w, r)
+		return
 	}
 
 	claims := token.Claims
@@ -147,37 +203,32 @@ func ResolveUserHandler(w http.ResponseWriter, r *http.Request) {
 
 	id, err := primitive.ObjectIDFromHex(claims.(*jwt.StandardClaims).Issuer)
 	if err != nil {
-		// handle
+		ReturnInvalidUser(w, r)
+		return
 	}
 
 	if err = database.Users.FindOne(context.TODO(), bson.D{
-		{"$and",
+		primitive.E{Key: "$and", Value:
 			bson.A {
 				bson.D {
-					{"_id", id},
+					primitive.E{Key: "_id", Value: id},
 				},
 			},
 		},
 	}).Decode(&requested); err != nil {
-		if err == mongo.ErrNoDocuments {
-			fmt.Println("User does not exist: "+claims.(*jwt.StandardClaims).Issuer)
-		}
-		// internal error
+		ReturnInvalidUser(w, r)
+		return
 	}
 
-	obscureUser := struct {
-		ID    interface{} `json:"id"`
-		Name   string `json:"name"`
-		EMail string `json:"email"`
-	}{
-		ID:    requested["_id"],
-		Name:   requested["name"],
-		EMail: requested["email"],
+	obscureUser := UserValidation{
+		Id:    requested["_id"],
+		Valid: true,
 	}
 
 	obscureUserJSON, err := json.Marshal(obscureUser)
 	if err != nil {
-		fmt.Println("Marshaling went wrong")
+		ReturnInvalidUser(w, r)
+		return
 	}
 
 	w.Header().Add("Content-Type", "application/json")
@@ -185,8 +236,8 @@ func ResolveUserHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func LogoutHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != "POST" {
-		// cry
+	if InvalidMethod(w, r, "POST") {
+		return
 	}
 	
 	cookie := &http.Cookie{
@@ -197,4 +248,24 @@ func LogoutHandler(w http.ResponseWriter, r *http.Request) {
     }
 
 	http.SetCookie(w, cookie)
+}
+
+func InvalidMethod(w http.ResponseWriter, r *http.Request, method string) bool {
+	if r.Method != method {
+		w.Header().Add("Allow", method)
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		w.Write([]byte(http.StatusText(http.StatusMethodNotAllowed)))
+		return true
+	}
+	return false
+}
+
+func ReturnInvalidUser(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Content-Type", "application/json")
+	w.WriteHeader(http.StatusUnauthorized)
+	invalidResponse, err := json.Marshal(InvalidUser)
+	if err != nil {
+		return
+	}
+	w.Write(invalidResponse)
 }
