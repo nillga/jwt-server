@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
@@ -21,11 +22,12 @@ type UserValidation struct {
 }
 
 var (
-	SecretKey = "no-secret, lol"
+	SecretKey = os.Getenv("JWT_SECRET_KEY")
 	InvalidUser = UserValidation{"-", false}
 )
 
 func RegisterHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
 	if InvalidMethod(w, r, "POST") {
 		return
 	}

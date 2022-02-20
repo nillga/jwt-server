@@ -1,0 +1,13 @@
+version: "3.9"
+services:
+  mongo:
+    image: "mongo"
+  jwt:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      MONGODB_URI: "mongodb://mongo:27017"
+      JWT_SECRET_KEY: "asdf1234"
+    depends_on:
+      - mongo

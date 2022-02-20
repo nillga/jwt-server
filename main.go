@@ -12,10 +12,10 @@ import (
 func main() {
 	database.Connect()
 
-	fmt.Println("Database connected -> Server's up")
+	fmt.Println("Database is connected -> The server is up and running at http://localhost:8000")
 
 	http.HandleFunc("/register", routes.RegisterHandler)
-	
+
 	http.HandleFunc("/login", routes.LoginHandler)
 
 	http.HandleFunc("/user", routes.ResolveUserHandler)
