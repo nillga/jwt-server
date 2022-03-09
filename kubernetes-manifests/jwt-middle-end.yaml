@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jwt-server-deployment
+  labels: 
+    app: jwt-server
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: jwt-server
+  template:
+    metadata:
+      labels:
+        app: jwt-server
+    spec:
+      containers:
+      - name: jwt-server
+        image: nillga/jwt-server-golang
+        resources:
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 8000
+        env:
+          - name: MONGODB_URI
+            value: "mongodb://mongo-0.mongo,mongo-1.mongo,mongo-2.mongo:27017"
+          - name: JWT_SECRET_KEY
+            value: "asdf1234"
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongo
+spec:
+  selector:
+      matchLabels:
+        app.kubernetes.io/name: mongo
+  serviceName: "mongo"
+  replicas: 3
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mongo
+        role: mongo
+        environment: test
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+        - name: mongo
+          image: mongo
+          ports:
+            - containerPort: 27017
+          volumeMounts:
+            - name: myclaim
+              mountPath: /data/db
+        - name: mongo-sidecar
+          image: cvallance/mongo-k8s-sidecar
+          env:
+            - name: MONGO_SIDECAR_POD_LABELS
+              value: "role=mongo,environment=test"
+  volumeClaimTemplates:
+  - metadata:
+      name: myclaim
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 1Gi
