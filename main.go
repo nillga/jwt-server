@@ -1,26 +1,27 @@
 package main
 
 import (
-	"fmt"
-	"log"
-	"net/http"
+	"os"
 
-	"github.com/nillga/jwt-server/database"
-	"github.com/nillga/jwt-server/routes"
+	"github.com/nillga/jwt-server/controller"
+	"github.com/nillga/jwt-server/http"
+	"github.com/nillga/jwt-server/repository"
+	"github.com/nillga/jwt-server/service"
+)
+
+var (
+	jwtRepo repository.JwtRepository = repository.NewMongoRepo(os.Getenv("MONGODB_URI"))
+	jwtService service.JwtService = service.NewJwtService(jwtRepo)
+	jwtController controller.JwtController = controller.NewController(jwtService)
+	jwtRouter router.Router = router.NewVanillaRouter()
 )
 
 func main() {
-	database.Connect()
+	jwtRouter.POST("/signup", jwtController.SignUp)
+	jwtRouter.GET("/login", jwtController.Login)
+	jwtRouter.POST("/delete", jwtController.Delete)
+	jwtRouter.GET("/resolve", jwtController.Resolve)
+	jwtRouter.GET("/logout", jwtController.Logout)
 
-	fmt.Println("Database is connected -> The server is up and running at http://localhost:8000")
-
-	http.HandleFunc("/register", routes.RegisterHandler)
-
-	http.HandleFunc("/login", routes.LoginHandler)
-
-	http.HandleFunc("/user", routes.ResolveUserHandler)
-
-	http.HandleFunc("/logout", routes.LogoutHandler)
-
-	log.Fatalln(http.ListenAndServe(":8000", nil))
+	jwtRouter.SERVE(os.Getenv("PORT"))
 }
