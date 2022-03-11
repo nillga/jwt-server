@@ -10,10 +10,11 @@ import (
 
 type JwtService interface {
 	Verify(id string) (*entity.User, error)
-	ValidateInput(input *entity.Input) error
-	CreateUser(input *entity.Input) (*entity.User, error)
+	ValidateInput(input *entity.SignupInput) error
+	CreateUser(input *entity.SignupInput) (*entity.User, error)
 	CheckUser(input *entity.LoginInput) (*entity.User, error)
 	DeleteUser(user *entity.User) error
+	NewPassword(id string, passwords *entity.ChangePassInput) error
 }
 
 type service struct{}
@@ -31,7 +32,7 @@ func (s *service) Verify(id string) (*entity.User, error) {
 	return repo.FindById(id)
 }
 
-func (s *service) ValidateInput(input *entity.Input) error {
+func (s *service) ValidateInput(input *entity.SignupInput) error {
 	if input.Password == "" {
 		return errors.New("no password provided")
 	}
@@ -64,7 +65,7 @@ func (s *service) ValidateInput(input *entity.Input) error {
 	return errors.New("internal DB error")
 }
 
-func (s *service) CreateUser(input *entity.Input) (*entity.User, error) {
+func (s *service) CreateUser(input *entity.SignupInput) (*entity.User, error) {
 	password, err := bcrypt.GenerateFromPassword([]byte(input.Password), 14)
 	if err != nil {
 		return nil, err
@@ -96,4 +97,34 @@ func (s *service) CheckUser(input *entity.LoginInput) (*entity.User, error) {
 
 func (s *service) DeleteUser(user *entity.User) error {
 	return repo.Delete(user.Id)
+}
+
+func (s *service) NewPassword(id string, passwords *entity.ChangePassInput) error {
+	current, err := repo.FindById(id)
+	if err != nil {
+		return err
+	}
+
+	if err = bcrypt.CompareHashAndPassword(current.Password, []byte(passwords.Old)); err != nil {
+		return err
+	}
+
+	if passwords.Password == "" {
+		return errors.New("no new password provided")
+	}
+	if passwords.Repeated == "" {
+		return errors.New("password has to be repeated")
+	}
+	if passwords.Password != passwords.Repeated {
+		return errors.New("password and repeated differ")
+	}
+
+	password, err := bcrypt.GenerateFromPassword([]byte(passwords.Password), 14)
+	if err != nil {
+		return err
+	}
+
+	current.Password = password
+
+	return repo.UpdateUser(id, current)
 }

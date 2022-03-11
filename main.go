@@ -19,9 +19,10 @@ var (
 func main() {
 	jwtRouter.POST("/signup", jwtController.SignUp)
 	jwtRouter.GET("/login", jwtController.Login)
-	jwtRouter.POST("/delete", jwtController.Delete)
+	jwtRouter.DELETE("/delete", jwtController.Delete)
 	jwtRouter.GET("/resolve", jwtController.Resolve)
 	jwtRouter.GET("/logout", jwtController.Logout)
+	jwtRouter.PUT("/changepass", jwtController.ChangePassword)
 
 	jwtRouter.SERVE(os.Getenv("PORT"))
 }

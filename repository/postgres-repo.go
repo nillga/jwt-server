@@ -29,3 +29,7 @@ func (p *postgresRepo) FindById(id string) (*entity.User, error) {
 func (p *postgresRepo) Delete(id string) error {
 	return nil
 }
+
+func (m *postgresRepo) UpdateUser(id string, user *entity.User) error {
+	return nil
+}

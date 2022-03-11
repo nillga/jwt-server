@@ -18,6 +18,7 @@ type JwtController interface {
 	Resolve(w http.ResponseWriter, r *http.Request)
 	Logout(w http.ResponseWriter, r *http.Request)
 	Delete(w http.ResponseWriter, r *http.Request)
+	ChangePassword(w http.ResponseWriter, r *http.Request)
 }
 
 type controller struct{}
@@ -40,7 +41,7 @@ func NewController(service service.JwtService) JwtController {
 func (c *controller) SignUp(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	var signupData entity.Input
+	var signupData entity.SignupInput
 
 	if err := json.NewDecoder(r.Body).Decode(&signupData); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -154,6 +155,30 @@ func (c *controller) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 
 	c.Logout(w, r)
+}
+
+func (c *controller) ChangePassword(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	claims := &Claims{}
+
+	if err := claims.decodeJwt(r); err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(errors.ProceduralError{Message: "Not authenticated. This resource can not be accessed."})
+		return
+	}
+
+	var next entity.ChangePassInput
+	if err := json.NewDecoder(r.Body).Decode(&next); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(errors.ProceduralError{Message: err.Error()})
+		return
+	}
+
+	if err := jwtService.NewPassword(claims.Username, &next); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(errors.ProceduralError{Message: err.Error()})
+		return
+	}
 }
 
 func (c *Claims) decodeJwt(r *http.Request) error {

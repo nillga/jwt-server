@@ -186,6 +186,47 @@ func (m *mongoRepository) Delete(id string) error {
 	return nil
 }
 
+func (m *mongoRepository) UpdateUser(id string, user *entity.User) error {
+	ctx := context.Background()
+	client, err := mongo.Connect(ctx,options.Client().ApplyURI(m.mongoUri))
+	if err != nil {
+		return err
+	}
+	users := client.Database(db).Collection(collection)
+
+	defer client.Disconnect(ctx)
+	bsonId, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return err
+	}
+
+	update := bson.D{
+		primitive.E{
+			Key: "$set",
+			Value: bson.D{
+				primitive.E{
+					Key: "name",
+					Value: user.Username,
+				},
+				primitive.E{
+					Key: "email",
+					Value: user.Email,
+				},
+				primitive.E{
+					Key: "password",
+					Value: user.Password,
+				},
+			},
+		},
+	}
+
+	if _, err = users.UpdateByID(ctx, bsonId, update); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (r *rawUser) ToUser() *entity.User {
 	return &entity.User{
 		Id: r.Id.(primitive.ObjectID).Hex(),

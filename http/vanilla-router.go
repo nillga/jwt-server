@@ -45,6 +45,15 @@ func (v *vanillaRouter) DELETE(uri string, f func(w http.ResponseWriter, r *http
 	})
 }
 
+func (v *vanillaRouter) PUT(uri string, f func(w http.ResponseWriter, r *http.Request)) {
+	vanillaDispatcher.HandleFunc(uri, func(w http.ResponseWriter, r *http.Request) {
+		if invalidMethod(w, r, "PUT") {
+			return
+		}
+		f(enableCORS(w),r)
+	})
+}
+
 func (v *vanillaRouter) SERVE(port string) {
 	log.Println("Vanilla Server running on port " + port)
 	log.Fatalln(http.ListenAndServe(":" + port, vanillaDispatcher))

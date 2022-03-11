@@ -7,7 +7,7 @@ type User struct {
 	Password []byte `json:"password,omitempty"`
 }
 
-type Input struct {
+type SignupInput struct {
 	Username string `json:"username"`
 	Email string `json:"mail"`
 	Password string `json:"password"`
@@ -17,4 +17,10 @@ type Input struct {
 type LoginInput struct {
 	Identifier string `json:"id"`
 	Password string `json:"password"`
+}
+
+type ChangePassInput struct {
+	Old string `json:"old"`
+	Password string `json:"password"`
+	Repeated string `json:"repeated"`
 }
