@@ -20,6 +20,7 @@ type LoginInput struct {
 }
 
 type ChangePassInput struct {
+	Id string `json:"id"`
 	Old string `json:"old"`
 	Password string `json:"password"`
 	Repeated string `json:"repeated"`

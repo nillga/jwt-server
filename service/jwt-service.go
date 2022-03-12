@@ -14,7 +14,7 @@ type JwtService interface {
 	CreateUser(input *entity.SignupInput) (*entity.User, error)
 	CheckUser(input *entity.LoginInput) (*entity.User, error)
 	DeleteUser(user *entity.User) error
-	NewPassword(id string, passwords *entity.ChangePassInput) error
+	NewPassword(passwords *entity.ChangePassInput) error
 }
 
 type service struct{}
@@ -99,8 +99,8 @@ func (s *service) DeleteUser(user *entity.User) error {
 	return repo.Delete(user.Id)
 }
 
-func (s *service) NewPassword(id string, passwords *entity.ChangePassInput) error {
-	current, err := repo.FindById(id)
+func (s *service) NewPassword(passwords *entity.ChangePassInput) error {
+	current, err := repo.FindById(passwords.Id)
 	if err != nil {
 		return err
 	}
@@ -126,5 +126,5 @@ func (s *service) NewPassword(id string, passwords *entity.ChangePassInput) erro
 
 	current.Password = password
 
-	return repo.UpdateUser(id, current)
+	return repo.UpdateUser(passwords.Id, current)
 }

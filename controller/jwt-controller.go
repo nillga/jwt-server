@@ -174,7 +174,9 @@ func (c *controller) ChangePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := jwtService.NewPassword(claims.Username, &next); err != nil {
+	next.Id = claims.Username
+
+	if err := jwtService.NewPassword(&next); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(errors.ProceduralError{Message: err.Error()})
 		return
