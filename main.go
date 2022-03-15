@@ -13,7 +13,7 @@ var (
 	jwtRepo       repository.JwtRepository = repository.NewPostgresRepo()
 	jwtService    service.JwtService       = service.NewJwtService(jwtRepo)
 	jwtController controller.JwtController = controller.NewController(jwtService)
-	jwtRouter     router.Router            = router.NewVanillaRouter()
+	jwtRouter     http.Router              = http.NewVanillaRouter()
 )
 
 func main() {

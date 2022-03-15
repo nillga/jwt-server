@@ -54,7 +54,7 @@ func (s *service) ValidateInput(input *entity.SignupInput) error {
 
 	user := &entity.User{
 		Username: input.Username,
-		Email: input.Email,
+		Email:    input.Email,
 	}
 
 	var got *entity.User
@@ -82,7 +82,7 @@ func (s *service) CreateUser(input *entity.SignupInput) (*entity.User, error) {
 
 	user := &entity.User{
 		Username: input.Username,
-		Email: input.Email,
+		Email:    input.Email,
 		Password: password,
 	}
 
@@ -100,7 +100,7 @@ func (s *service) CheckUser(input *entity.LoginInput) (*entity.User, error) {
 	if err = bcrypt.CompareHashAndPassword(user.Password, []byte(input.Password)); err != nil {
 		return nil, err
 	}
-	
+
 	return user, nil
 }
 

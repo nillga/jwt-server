@@ -23,7 +23,7 @@ func (v *vanillaRouter) GET(uri string, f func(w http.ResponseWriter, r *http.Re
 		if invalidMethod(w, r, "GET") {
 			return
 		}
-		f(enableCORS(w),r)
+		f(enableCORS(w), r)
 	})
 }
 
@@ -32,7 +32,7 @@ func (v *vanillaRouter) POST(uri string, f func(w http.ResponseWriter, r *http.R
 		if invalidMethod(w, r, "POST") {
 			return
 		}
-		f(enableCORS(w),r)
+		f(enableCORS(w), r)
 	})
 }
 
@@ -41,7 +41,7 @@ func (v *vanillaRouter) DELETE(uri string, f func(w http.ResponseWriter, r *http
 		if invalidMethod(w, r, "DELETE") {
 			return
 		}
-		f(enableCORS(w),r)
+		f(enableCORS(w), r)
 	})
 }
 
@@ -50,13 +50,13 @@ func (v *vanillaRouter) PUT(uri string, f func(w http.ResponseWriter, r *http.Re
 		if invalidMethod(w, r, "PUT") {
 			return
 		}
-		f(enableCORS(w),r)
+		f(enableCORS(w), r)
 	})
 }
 
 func (v *vanillaRouter) SERVE(port string) {
 	log.Println("Vanilla Server running on port " + port)
-	log.Fatalln(http.ListenAndServe(":" + port, vanillaDispatcher))
+	log.Fatalln(http.ListenAndServe(":"+port, vanillaDispatcher))
 }
 
 func invalidMethod(w http.ResponseWriter, r *http.Request, method string) bool {

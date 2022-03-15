@@ -10,7 +10,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/nillga/jwt-server/entity"
 	"github.com/nillga/jwt-server/postgresql"
-	"github.com/rubenv/sql-migrate"
+	migrate "github.com/rubenv/sql-migrate"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -38,7 +38,7 @@ func NewPostgresRepo() JwtRepository {
 		if err != nil {
 			panic(err)
 		}
-		fmt.Println("pwd ==> "+ dir)
+		fmt.Println("pwd ==> " + dir)
 		dirs, err := os.ReadDir(dir)
 		if err != nil {
 			panic(err)
@@ -58,7 +58,7 @@ func NewPostgresRepo() JwtRepository {
 			Name:     "genesis_admin",
 			Mail:     "satoshi.nakamoto@wierbicki.org",
 			Password: string(genesisPass),
-			Admin: true,
+			Admin:    true,
 		}); err != nil {
 			panic(err)
 		}
@@ -82,7 +82,7 @@ func (p *postgresRepo) Store(user *entity.User) (*entity.User, error) {
 		Name:     user.Username,
 		Mail:     user.Email,
 		Password: string(user.Password),
-		Admin: false,
+		Admin:    false,
 	})
 	if err != nil {
 		return nil, err
@@ -92,7 +92,7 @@ func (p *postgresRepo) Store(user *entity.User) (*entity.User, error) {
 		Username: row.Name,
 		Email:    row.Mail,
 		Password: []byte(row.Password),
-		Admin: row.Admin,
+		Admin:    row.Admin,
 	}, nil
 }
 
@@ -117,7 +117,7 @@ func (p *postgresRepo) Find(user *entity.User) (*entity.User, error) {
 		Username: row.Name,
 		Email:    row.Mail,
 		Password: []byte(row.Password),
-		Admin: row.Admin,
+		Admin:    row.Admin,
 	}, nil
 }
 
@@ -144,7 +144,7 @@ func (p *postgresRepo) FindById(id string) (*entity.User, error) {
 		Username: row.Name,
 		Email:    row.Mail,
 		Password: []byte(row.Password),
-		Admin: row.Admin,
+		Admin:    row.Admin,
 	}, nil
 }
 

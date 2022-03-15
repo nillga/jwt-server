@@ -25,13 +25,13 @@ type controller struct{}
 
 type Claims struct {
 	Username string `json:"username"`
-	Admin bool `json:"admin"`
+	Admin    bool   `json:"admin"`
 	jwt.StandardClaims
 }
 
 var (
 	jwtService service.JwtService
-	secretKey = os.Getenv("JWT_SECRET_KEY")
+	secretKey  = os.Getenv("JWT_SECRET_KEY")
 )
 
 func NewController(service service.JwtService) JwtController {
@@ -74,7 +74,7 @@ func (c *controller) Login(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(errors.ProceduralError{Message: "Failed reading request body."})
 		return
 	}
-	
+
 	user, err := jwtService.CheckUser(&loginData)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -84,7 +84,7 @@ func (c *controller) Login(w http.ResponseWriter, r *http.Request) {
 
 	claims := &Claims{
 		Username: user.Id,
-		Admin: user.Admin,
+		Admin:    user.Admin,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(time.Hour * 2).Unix(),
 		},
@@ -100,22 +100,22 @@ func (c *controller) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	cookie := http.Cookie{
-        Name:   "jwt",
-        Value:  tokenString,
-        Expires: time.Now().Add(time.Hour * 2),
-		Path: "/",
-    }
+		Name:    "jwt",
+		Value:   tokenString,
+		Expires: time.Now().Add(time.Hour * 2),
+		Path:    "/",
+	}
 
 	http.SetCookie(w, &cookie)
 }
 
 func (c *controller) Logout(w http.ResponseWriter, r *http.Request) {
 	cookie := &http.Cookie{
-        Name:   "jwt",
-        Value:  "",
-        Expires: time.Now().Add(-time.Hour),
+		Name:     "jwt",
+		Value:    "",
+		Expires:  time.Now().Add(-time.Hour),
 		HttpOnly: true,
-    }
+	}
 
 	http.SetCookie(w, cookie)
 }
@@ -124,7 +124,8 @@ func (c *controller) Resolve(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	claims := &Claims{}
 
-	err := claims.decodeJwt(r); if err != nil {
+	err := claims.decodeJwt(r)
+	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 		json.NewEncoder(w).Encode(errors.ProceduralError{Message: "Not authenticated. This resource can not be accessed."})
 		return

@@ -195,7 +195,7 @@ func TestService_DeleteUser(t *testing.T) {
 	t.Run("Valid", func(t *testing.T) {
 		mockRepo := new(mockRepository)
 		mockRepo.On("Delete").Return(nil)
-	
+
 		testService := NewJwtService(mockRepo)
 		err := testService.DeleteUser(&entity.User{Id: "42"})
 		assert.Nil(t, err)
@@ -203,7 +203,7 @@ func TestService_DeleteUser(t *testing.T) {
 	t.Run("No ID", func(t *testing.T) {
 		mockRepo := new(mockRepository)
 		mockRepo.On("Delete").Return(nil)
-	
+
 		testService := NewJwtService(mockRepo)
 		err := testService.DeleteUser(&entity.User{})
 		assert.NotNil(t, err)
@@ -219,23 +219,23 @@ func TestService_NewPassword(t *testing.T) {
 			uError   error
 			ret      error
 		}
-	
+
 		input := &entity.ChangePassInput{
 			Id:       "42",
 			Old:      "SHIB>>DOGE",
 			Password: "sMaShCaPiTaLiSm",
 			Repeated: "sMaShCaPiTaLiSm",
 		}
-	
+
 		stored, err := bcrypt.GenerateFromPassword([]byte("SHIB>>DOGE"), 14)
 		if err != nil {
 			t.Errorf("bcrypt-Error in test")
 		}
-	
+
 		fbiUser := &entity.User{
 			Password: stored,
 		}
-	
+
 		tests := []newPasswordCase{
 			{input: func() *entity.ChangePassInput { this := *input; this.Repeated = "tAxThErIcH"; return &this }(), fbiUser: fbiUser, fbiError: nil, uError: nil, ret: errors.New("")},
 			{input: func() *entity.ChangePassInput { this := *input; this.Repeated = ""; return &this }(), fbiUser: fbiUser, fbiError: nil, uError: nil, ret: errors.New("")},
@@ -246,17 +246,17 @@ func TestService_NewPassword(t *testing.T) {
 			{input: &entity.ChangePassInput{}, fbiUser: fbiUser, fbiError: nil, uError: errors.New(""), ret: errors.New("")},
 			{input: &entity.ChangePassInput{Id: "42"}, fbiUser: nil, fbiError: errors.New(""), uError: nil, ret: errors.New("")},
 		}
-	
+
 		for _, test := range tests {
 			mockRepo := new(mockRepository)
-	
+
 			mockRepo.On("FindById").Return(test.fbiUser, test.fbiError)
 			mockRepo.On("UpdateUser").Return(test.uError)
-	
+
 			testService := NewJwtService(mockRepo)
-	
+
 			err := testService.NewPassword(test.input)
-	
+
 			if test.ret == nil {
 				assert.Nil(t, err)
 			} else {
@@ -276,7 +276,7 @@ func TestService_NewPassword(t *testing.T) {
 		if err != nil {
 			t.Errorf("bcrypt-Error in test")
 		}
-	
+
 		fbiUser := &entity.User{
 			Password: stored,
 		}
