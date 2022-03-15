@@ -13,5 +13,6 @@ EXPOSE 8000
 
 WORKDIR /
 COPY --from=build-env /server /
+COPY /sql /sql
 
 CMD ["/server"]

@@ -6,15 +6,16 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_USER: username
+      POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
-      POSTGRES_DB: default_database
+      POSTGRES_DB: postgres
   jwt:
     build: .
     ports:
       - "8000:8000"
+    restart: always
     environment:
-      MONGODB_URI: "postgresql://username:password@postgres/default_database"
+      MONGODB_URI: "postgres://postgres:password@postgres/postgres?sslmode=disable"
       PORT: "8000"
       JWT_SECRET_KEY: "asdf1234"
     depends_on:
