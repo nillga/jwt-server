@@ -1,14 +1,21 @@
 version: "3.9"
 services:
-  mongo:
-    image: "mongo"
+  postgres:
+    image: postgres:14.1-alpine
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: username
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: default_database
   jwt:
     build: .
     ports:
       - "8000:8000"
     environment:
-      MONGODB_URI: "mongodb://mongo:27017"
+      MONGODB_URI: "postgresql://username:password@postgres/default_database"
       PORT: "8000"
       JWT_SECRET_KEY: "asdf1234"
     depends_on:
-      - mongo
+      - postgres

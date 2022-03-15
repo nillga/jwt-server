@@ -10,10 +10,10 @@ import (
 )
 
 var (
-	jwtRepo repository.JwtRepository = repository.NewMongoRepo(os.Getenv("MONGODB_URI"))
-	jwtService service.JwtService = service.NewJwtService(jwtRepo)
+	jwtRepo       repository.JwtRepository = repository.NewPostgresRepo(os.Getenv("MONGODB_URI"))
+	jwtService    service.JwtService       = service.NewJwtService(jwtRepo)
 	jwtController controller.JwtController = controller.NewController(jwtService)
-	jwtRouter router.Router = router.NewVanillaRouter()
+	jwtRouter     router.Router            = router.NewVanillaRouter()
 )
 
 func main() {
