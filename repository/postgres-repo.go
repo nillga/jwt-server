@@ -11,6 +11,7 @@ import (
 	"github.com/nillga/jwt-server/entity"
 	"github.com/nillga/jwt-server/postgresql"
 	"github.com/rubenv/sql-migrate"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type postgresRepo struct {
@@ -46,6 +47,19 @@ func NewPostgresRepo(postgresUri string) JwtRepository {
 		if _, err = migrate.Exec(db, "postgres", migrations, migrate.Up); err != nil {
 			panic(err)
 		}
+		ctx := context.Background()
+		genesisPass, err := bcrypt.GenerateFromPassword([]byte("btc"), 14)
+		if err != nil {
+			panic(err)
+		}
+		if _, err = postgresql.New(db).CreateUser(ctx, postgresql.CreateUserParams{
+			Name:     "genesis_admin",
+			Mail:     "satoshi.nakamoto@wierbicki.org",
+			Password: string(genesisPass),
+			Admin: true,
+		}); err != nil {
+			panic(err)
+		}
 		initialized = true
 	}
 
@@ -66,6 +80,7 @@ func (p *postgresRepo) Store(user *entity.User) (*entity.User, error) {
 		Name:     user.Username,
 		Mail:     user.Email,
 		Password: string(user.Password),
+		Admin: false,
 	})
 	if err != nil {
 		return nil, err
@@ -75,6 +90,7 @@ func (p *postgresRepo) Store(user *entity.User) (*entity.User, error) {
 		Username: row.Name,
 		Email:    row.Mail,
 		Password: []byte(row.Password),
+		Admin: row.Admin,
 	}, nil
 }
 
@@ -99,6 +115,7 @@ func (p *postgresRepo) Find(user *entity.User) (*entity.User, error) {
 		Username: row.Name,
 		Email:    row.Mail,
 		Password: []byte(row.Password),
+		Admin: row.Admin,
 	}, nil
 }
 
@@ -125,6 +142,7 @@ func (p *postgresRepo) FindById(id string) (*entity.User, error) {
 		Username: row.Name,
 		Email:    row.Mail,
 		Password: []byte(row.Password),
+		Admin: row.Admin,
 	}, nil
 }
 

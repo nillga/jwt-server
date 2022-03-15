@@ -251,7 +251,7 @@ func TestController_Resolve_Success(t *testing.T) {
 	testController := NewController(testService)
 
 	test := testTable{
-			"Valid", http.MethodGet, []byte{}, http.StatusOK, `{"_id":"` + "1917" + `","name":"` + "daniel" + `","email":"` + "test@wierbicki.org" + `","password":"` + base64.StdEncoding.EncodeToString(stored) + `"}` + "\n",
+			"Valid", http.MethodGet, []byte{}, http.StatusOK, `{"_id":"` + "1917" + `","name":"` + "daniel" + `","email":"` + "test@wierbicki.org" + `","password":"` + base64.StdEncoding.EncodeToString(stored) + `","admin":` + "false" + `}` + "\n",
 	}
 
 	claims := &Claims{
@@ -385,10 +385,24 @@ func TestController_Delete(t *testing.T) {
 		Path: "/",
 	}
 
+	claims.Username = "191"
+	claims.Admin = true
+	token = jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	tokenString, _ = token.SignedString([]byte(secretKey))
+
+	su := http.Cookie{
+		Name:   "jwt",
+		Value:  tokenString,
+		Expires: time.Now().Add(time.Hour * 2),
+		Path: "/",
+	}
+
 	tests := []deleteTable{
-			{testTable{"Valid", http.MethodPost, []byte{}, http.StatusOK, ""}, &valid, 0, true},
+			{testTable{"Valid", http.MethodPost, []byte(`{"id":"` + "1917" + `"}`), http.StatusOK, ""}, &valid, 0, true},
 			{testTable{"No cookie", http.MethodPost, []byte{}, http.StatusUnauthorized, `{"message":"` + "Not authenticated. This resource can not be accessed." + `"}` + "\n",}, nil, 1, false},
-			{testTable{"Invalid Cookie", http.MethodPost, []byte{}, http.StatusInternalServerError, `{"message":"` + "Failed deleting user." + `"}` + "\n",}, &invalid, 1, false},
+			{testTable{"Invalid Cookie", http.MethodPost, []byte(`{"id":"` + "1917" + `"}`), http.StatusUnauthorized, `{"message":"` + "No permissions to delete this user" + `"}` + "\n",}, &invalid, 1, false},
+			{testTable{"Invalid Id", http.MethodPost, []byte(`{"id":"` + "19170" + `"}`), http.StatusInternalServerError, `{"message":"` + "Failed deleting user." + `"}` + "\n",}, &su, 1, false},
+			{testTable{"Invalid Request", http.MethodPost, []byte(`"di":"` + "1917" + `"}[`), http.StatusBadRequest, `{"message":"` + "Failed reading request body." + `"}` + "\n",}, &valid, 1, false},
 	}
 
 	for _, test := range tests {

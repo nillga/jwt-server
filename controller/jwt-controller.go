@@ -25,6 +25,7 @@ type controller struct{}
 
 type Claims struct {
 	Username string `json:"username"`
+	Admin bool `json:"admin"`
 	jwt.StandardClaims
 }
 
@@ -83,6 +84,7 @@ func (c *controller) Login(w http.ResponseWriter, r *http.Request) {
 
 	claims := &Claims{
 		Username: user.Id,
+		Admin: user.Admin,
 		StandardClaims: jwt.StandardClaims{
 			ExpiresAt: time.Now().Add(time.Hour * 2).Unix(),
 		},
@@ -148,7 +150,21 @@ func (c *controller) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := jwtService.DeleteUser(&entity.User{Id: claims.Username}); err != nil {
+	var deleteId entity.DeleteUserInput
+
+	if err := json.NewDecoder(r.Body).Decode(&deleteId); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(errors.ProceduralError{Message: "Failed reading request body."})
+		return
+	}
+
+	if !(claims.Admin || deleteId.Id == claims.Username) {
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(errors.ProceduralError{Message: "No permissions to delete this user"})
+		return
+	}
+
+	if err := jwtService.DeleteUser(&entity.User{Id: deleteId.Id}); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(errors.ProceduralError{Message: "Failed deleting user."})
 		return
