@@ -123,6 +123,8 @@ func TestService_ValidateInput(t *testing.T) {
 		{errors.New(""), &entity.SignupInput{Username: "test", Email: "test@wierbicki.org", Password: "", Repeated: "asdf"}, nil, errors.New("")},
 		{errors.New(""), &entity.SignupInput{Username: "test", Email: "test@wierbicki.org", Password: "asdf", Repeated: ""}, nil, errors.New("")},
 		{errors.New(""), &entity.SignupInput{Username: "test", Email: "test@wierbicki.org", Password: "asdf", Repeated: "1234"}, nil, errors.New("")},
+		{errors.New(""), &entity.SignupInput{Username: "", Email: "test@wierbicki.org", Password: "asdf", Repeated: ""}, nil, errors.New("")},
+		{errors.New(""), &entity.SignupInput{Username: "test", Email: "mail", Password: "asdf", Repeated: "1234"}, nil, errors.New("")},
 	}
 
 	for _, test := range tests {
@@ -190,12 +192,22 @@ func TestService_CheckUser(t *testing.T) {
 }
 
 func TestService_DeleteUser(t *testing.T) {
-	mockRepo := new(mockRepository)
-	mockRepo.On("Delete").Return(nil)
-
-	testService := NewJwtService(mockRepo)
-	err := testService.DeleteUser(&entity.User{Id: "42"})
-	assert.Nil(t, err)
+	t.Run("Valid", func(t *testing.T) {
+		mockRepo := new(mockRepository)
+		mockRepo.On("Delete").Return(nil)
+	
+		testService := NewJwtService(mockRepo)
+		err := testService.DeleteUser(&entity.User{Id: "42"})
+		assert.Nil(t, err)
+	})
+	t.Run("No ID", func(t *testing.T) {
+		mockRepo := new(mockRepository)
+		mockRepo.On("Delete").Return(nil)
+	
+		testService := NewJwtService(mockRepo)
+		err := testService.DeleteUser(&entity.User{})
+		assert.NotNil(t, err)
+	})
 }
 
 func TestService_NewPassword(t *testing.T) {
@@ -231,6 +243,8 @@ func TestService_NewPassword(t *testing.T) {
 			{input: func() *entity.ChangePassInput { this := *input; this.Old = "DOGE>>SHIB"; return &this }(), fbiUser: fbiUser, fbiError: nil, uError: nil, ret: errors.New("")},
 			{input: input, fbiUser: fbiUser, fbiError: nil, uError: errors.New(""), ret: errors.New("")},
 			{input: input, fbiUser: nil, fbiError: errors.New(""), uError: nil, ret: errors.New("")},
+			{input: &entity.ChangePassInput{}, fbiUser: fbiUser, fbiError: nil, uError: errors.New(""), ret: errors.New("")},
+			{input: &entity.ChangePassInput{Id: "42"}, fbiUser: nil, fbiError: errors.New(""), uError: nil, ret: errors.New("")},
 		}
 	
 		for _, test := range tests {

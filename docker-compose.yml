@@ -15,7 +15,11 @@ services:
       - "8000:8000"
     restart: always
     environment:
-      MONGODB_URI: "postgres://postgres:password@postgres/postgres?sslmode=disable"
+      PG_HOST: "postgres"
+      PG_PORT: "5432"
+      PG_USER: "postgres"
+      PG_PASS: "password"
+      PG_DBNAME: "postgres"
       PORT: "8000"
       JWT_SECRET_KEY: "asdf1234"
     depends_on:

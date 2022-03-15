@@ -10,7 +10,7 @@ import (
 )
 
 var (
-	jwtRepo       repository.JwtRepository = repository.NewPostgresRepo(os.Getenv("MONGODB_URI"))
+	jwtRepo       repository.JwtRepository = repository.NewPostgresRepo()
 	jwtService    service.JwtService       = service.NewJwtService(jwtRepo)
 	jwtController controller.JwtController = controller.NewController(jwtService)
 	jwtRouter     router.Router            = router.NewVanillaRouter()

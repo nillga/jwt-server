@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"regexp"
 
 	"github.com/nillga/jwt-server/entity"
 	"github.com/nillga/jwt-server/repository"
@@ -33,6 +34,14 @@ func (s *service) Verify(id string) (*entity.User, error) {
 }
 
 func (s *service) ValidateInput(input *entity.SignupInput) error {
+	mailRegex := regexp.MustCompile(`^\S+@\S+.[A-Za-z]+$`)
+
+	if input.Username == "" {
+		return errors.New("no username provided")
+	}
+	if !mailRegex.Match([]byte(input.Email)) {
+		return errors.New("no valid mailadress provided")
+	}
 	if input.Password == "" {
 		return errors.New("no password provided")
 	}
@@ -96,10 +105,20 @@ func (s *service) CheckUser(input *entity.LoginInput) (*entity.User, error) {
 }
 
 func (s *service) DeleteUser(user *entity.User) error {
+	if user.Id == "" {
+		return errors.New("no ID provided")
+	}
 	return repo.Delete(user.Id)
 }
 
 func (s *service) NewPassword(passwords *entity.ChangePassInput) error {
+	if passwords.Id == "" {
+		return errors.New("no user ID provided")
+	}
+	if passwords.Old == "" {
+		return errors.New("no current password provided")
+	}
+
 	current, err := repo.FindById(passwords.Id)
 	if err != nil {
 		return err

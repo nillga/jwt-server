@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"os"
 
 	"github.com/nillga/jwt-server/entity"
 	"go.mongodb.org/mongo-driver/bson"
@@ -26,9 +27,9 @@ const (
 	collection string = "users"
 )
 
-func NewMongoRepo(mongoUri string) JwtRepository {
+func NewMongoRepo() JwtRepository {
 	return &mongoRepository{
-		mongoUri: mongoUri,
+		mongoUri: os.Getenv("MONGODB_URI"),
 	}
 }
 

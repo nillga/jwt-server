@@ -22,10 +22,19 @@ type mockRepo struct {
 	users []entity.User
 }
 
+type failRepo struct {
+	mockRepo
+}
+
+func (f *failRepo) Store(user *entity.User) (*entity.User, error) {
+	return nil, errors.New("")
+}
+
 func (m *mockRepo) Store(user *entity.User) (*entity.User, error) {
 	m.users = append(m.users, *user)
 	return user, nil
 }
+
 func (m *mockRepo) Find(user *entity.User) (*entity.User, error) {
 	for _, u := range m.users {
 		if user.Id == u.Id || user.Username == u.Username || user.Email == u.Email {
@@ -80,30 +89,39 @@ type testTable struct {
 }
 
 func TestController_Signup(t *testing.T) {
-	signUpTests := []testTable{
+	type suTable struct {
+		testTable
+		repo repository.JwtRepository
+	}
+	signUpTests := []suTable{
 		{
-			"Perfectly fine", http.MethodPost,
+			testTable{"Perfectly fine", http.MethodPost,
 			[]byte(`{"username":"` + "daniel" + `","mail":"` + "daniel@wierbicki.org" + `","password":"` + "mehmJIFF" + `","repeated":"` + "mehmJIFF" + `"}`),
-			http.StatusOK, "",
+			http.StatusOK, "",}, NewMockRepo(),
 		},
 		{
-			"Broken JSON", http.MethodPost,
+			testTable{"Broken JSON", http.MethodPost,
 			[]byte(`kekw`),
 			http.StatusBadRequest, `{"message":"` + http.StatusText(http.StatusBadRequest) + `"}` + "\n",
+			}, NewMockRepo(),
 		},
 		{
-			"Invalid Input", http.MethodPost,
+			testTable{"Invalid Input", http.MethodPost,
 			[]byte(`{"username":"` + "daniel" + `","mail":"` + "daniel@wierbicki.org" + `","password":"` + "" + `","repeated":"` + "" + `"}`),
-			http.StatusBadRequest, `{"message":"` + "no password provided" + `"}` + "\n",
+			http.StatusBadRequest, `{"message":"` + "no password provided" + `"}` + "\n",}, NewMockRepo(),
+		},
+		{
+			testTable{"Repo error", http.MethodPost,
+			[]byte(`{"username":"` + "daniel" + `","mail":"` + "daniel@wierbicki.org" + `","password":"` + "mehmJIFF" + `","repeated":"` + "mehmJIFF" + `"}`),
+			http.StatusInternalServerError, `{"message":"` + "Failed creating new user." + `"}` + "\n",}, &failRepo{},
 		},
 	}
 
-	testService := service.NewJwtService(NewMockRepo())
-
-	testController := NewController(testService)
-
 	for _, test := range signUpTests {
 		t.Run(test.name, func(t *testing.T) {
+			testService := service.NewJwtService(test.repo)
+			testController := NewController(testService)
+
 			req, _ := http.NewRequest(test.method, "/signup", bytes.NewBuffer(test.input))
 
 			handler := http.HandlerFunc(testController.SignUp)

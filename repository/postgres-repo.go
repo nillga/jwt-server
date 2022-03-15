@@ -24,7 +24,9 @@ var migrations = &migrate.FileMigrationSource{
 
 var initialized = false
 
-func NewPostgresRepo(postgresUri string) JwtRepository {
+func NewPostgresRepo() JwtRepository {
+	postgresUri := fmt.Sprintf("host=%s port=%s user=%s "+"password=%s dbname=%s sslmode=disable", os.Getenv("PG_HOST"), os.Getenv("PG_PORT"), os.Getenv("PG_USER"), os.Getenv("PG_PASS"), os.Getenv("PG_DBNAME"))
+
 	if !initialized {
 		db, err := sql.Open("postgres", postgresUri)
 		defer db.Close()
