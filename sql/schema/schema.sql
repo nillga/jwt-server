@@ -6,7 +6,3 @@ CREATE TABLE users (
     password    text      NOT NULL,
     admin       boolean   NOT NULL
 );
-
-INSERT INTO users (
-    name="genesisAdmin", mail="satoshi.nakamoto@wierbicki.org", password="", admin=true
-)

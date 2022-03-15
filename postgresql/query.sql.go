@@ -9,27 +9,34 @@ import (
 
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (
-    name, mail, password
+    name, mail, password, admin
 ) VALUES (
-          $1, $2, $3
+          $1, $2, $3, $4
           )
-RETURNING id, name, mail, password
+RETURNING id, name, mail, password, admin
 `
 
 type CreateUserParams struct {
 	Name     string
 	Mail     string
 	Password string
+	Admin    bool
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRowContext(ctx, createUser, arg.Name, arg.Mail, arg.Password)
+	row := q.db.QueryRowContext(ctx, createUser,
+		arg.Name,
+		arg.Mail,
+		arg.Password,
+		arg.Admin,
+	)
 	var i User
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
 		&i.Mail,
 		&i.Password,
+		&i.Admin,
 	)
 	return i, err
 }
@@ -45,7 +52,7 @@ func (q *Queries) DeleteUser(ctx context.Context, id int64) error {
 }
 
 const findUser = `-- name: FindUser :one
-SELECT id, name, mail, password FROM users
+SELECT id, name, mail, password, admin FROM users
 WHERE name = $1 OR mail = $2 LIMIT 1
 `
 
@@ -62,12 +69,13 @@ func (q *Queries) FindUser(ctx context.Context, arg FindUserParams) (User, error
 		&i.Name,
 		&i.Mail,
 		&i.Password,
+		&i.Admin,
 	)
 	return i, err
 }
 
 const findUserById = `-- name: FindUserById :one
-SELECT id, name, mail, password FROM users
+SELECT id, name, mail, password, admin FROM users
 WHERE id = $1 LIMIT 1
 `
 
@@ -79,6 +87,7 @@ func (q *Queries) FindUserById(ctx context.Context, id int64) (User, error) {
 		&i.Name,
 		&i.Mail,
 		&i.Password,
+		&i.Admin,
 	)
 	return i, err
 }

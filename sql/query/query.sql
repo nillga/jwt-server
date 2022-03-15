@@ -6,7 +6,7 @@ WHERE id = $1 LIMIT 1;
 INSERT INTO users (
     name, mail, password, admin
 ) VALUES (
-          $1, $2, $3, false
+          $1, $2, $3, $4
           )
 RETURNING *;
 

@@ -9,4 +9,5 @@ type User struct {
 	Name     string
 	Mail     string
 	Password string
+	Admin    bool
 }
