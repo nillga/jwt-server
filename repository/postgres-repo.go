@@ -34,18 +34,7 @@ func NewPostgresRepo() JwtRepository {
 			panic(err)
 		}
 		fmt.Println("db connect successful")
-		dir, err := os.Getwd()
-		if err != nil {
-			panic(err)
-		}
-		fmt.Println("pwd ==> " + dir)
-		dirs, err := os.ReadDir(dir)
-		if err != nil {
-			panic(err)
-		}
-		for i := range dirs {
-			fmt.Println("-> subdir: " + dirs[i].Name())
-		}
+		
 		if _, err = migrate.Exec(db, "postgres", migrations, migrate.Up); err != nil {
 			panic(err)
 		}

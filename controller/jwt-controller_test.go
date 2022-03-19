@@ -52,15 +52,13 @@ func (m *mockRepo) FindById(id string) (*entity.User, error) {
 	return nil, errors.New("")
 }
 func (m *mockRepo) UpdateUser(id string, user *entity.User) error {
-	{
-		for i, u := range m.users {
-			if id == u.Id {
-				m.users[i] = *user
-				return nil
-			}
+	for i, u := range m.users {
+		if id == u.Id {
+			m.users[i] = *user
+			return nil
 		}
-		return errors.New("")
 	}
+	return errors.New("")
 }
 func (m *mockRepo) Delete(id string) error {
 	for i, u := range m.users {
