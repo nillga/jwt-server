@@ -23,6 +23,7 @@ var migrations = &migrate.FileMigrationSource{
 }
 
 var initialized = false
+var initialUser = false
 
 func NewPostgresRepo() JwtRepository {
 	postgresUri := fmt.Sprintf("host=%s port=%s user=%s "+"password=%s dbname=%s sslmode=disable", os.Getenv("PG_HOST"), os.Getenv("PG_PORT"), os.Getenv("PG_USER"), os.Getenv("PG_PASS"), os.Getenv("PG_DBNAME"))
@@ -34,8 +35,16 @@ func NewPostgresRepo() JwtRepository {
 			panic(err)
 		}
 		fmt.Println("db connect successful")
-		
+
 		if _, err = migrate.Exec(db, "postgres", migrations, migrate.Up); err != nil {
+			panic(err)
+		}
+		initialized = true
+	}
+	if !initialUser {
+		db, err := sql.Open("postgres", postgresUri)
+		defer db.Close()
+		if err != nil {
 			panic(err)
 		}
 		ctx := context.Background()
@@ -51,7 +60,7 @@ func NewPostgresRepo() JwtRepository {
 		}); err != nil {
 			panic(err)
 		}
-		initialized = true
+		initialUser = true
 	}
 
 	return &postgresRepo{

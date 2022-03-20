@@ -2,6 +2,7 @@ package controller
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -49,39 +50,20 @@ func (c *controller) SignUp(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(errors.ProceduralError{Message: http.StatusText(http.StatusBadRequest)})
 		return
 	}
-
+	
 	if err := jwtService.ValidateInput(&signupData); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(errors.ProceduralError{Message: err.Error()})
 		return
 	}
 
-	if _, err := jwtService.CreateUser(&signupData); err != nil {
+	user, err := jwtService.CreateUser(&signupData)
+	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(errors.ProceduralError{Message: "Failed creating new user."})
 		return
 	}
-}
-
-func (c *controller) Login(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
-	var loginData entity.LoginInput
-	var user *entity.User
-
-	if err := json.NewDecoder(r.Body).Decode(&loginData); err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(errors.ProceduralError{Message: "Failed reading request body."})
-		return
-	}
-
-	user, err := jwtService.CheckUser(&loginData)
-	if err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(errors.ProceduralError{Message: "Invalid login data."})
-		return
-	}
-
+/*
 	claims := &Claims{
 		Username: user.Id,
 		Admin:    user.Admin,
@@ -107,6 +89,71 @@ func (c *controller) Login(w http.ResponseWriter, r *http.Request) {
 	}
 
 	http.SetCookie(w, &cookie)
+*/
+	if err = json.NewEncoder(w).Encode(user); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(errors.ProceduralError{Message: "Invalid login data."})
+		return
+	}
+
+//	log.Println(cookie.Name, cookie.Value)
+}
+
+func (c *controller) Login(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	var loginData entity.LoginInput
+	var user *entity.User
+
+	if err := json.NewDecoder(r.Body).Decode(&loginData); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(errors.ProceduralError{Message: "Failed reading request body."})
+		return
+	}
+
+	user, err := jwtService.CheckUser(&loginData)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(errors.ProceduralError{Message: "Invalid login data."})
+		return
+	}
+
+	if err = json.NewEncoder(w).Encode(user); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(errors.ProceduralError{Message: "Invalid login data."})
+		return
+	}
+/*
+	claims := &Claims{
+		Username: user.Id,
+		Admin:    user.Admin,
+		StandardClaims: jwt.StandardClaims{
+			ExpiresAt: time.Now().Add(time.Hour * 2).Unix(),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	tokenString, err := token.SignedString([]byte(secretKey))
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(errors.ProceduralError{Message: "Failed issuing JWT token"})
+		return
+	}
+
+	cookie := http.Cookie{
+		Name:    "jwt",
+		Value:   tokenString,
+		Expires: time.Now().Add(time.Hour * 2),
+		Path:    "/",
+	}
+
+	http.SetCookie(w, &cookie)
+	log.Println(cookie.Name, cookie.Value)
+	for k, v := range w.Header() {
+		log.Println(k, ":", v)
+	}
+	*/
 }
 
 func (c *controller) Logout(w http.ResponseWriter, r *http.Request) {
@@ -122,17 +169,15 @@ func (c *controller) Logout(w http.ResponseWriter, r *http.Request) {
 
 func (c *controller) Resolve(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	claims := &Claims{}
-
-	err := claims.decodeJwt(r)
-	if err != nil {
-		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(errors.ProceduralError{Message: "Not authenticated. This resource can not be accessed."})
+	ids, ok := r.URL.Query()["id"]
+	if !ok || len(ids) < 1 {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(errors.ProceduralError{Message: "Failed reading request"})
 		return
 	}
 
-	var user *entity.User
-	if user, err = jwtService.Verify(claims.Username); err != nil {
+	user, err := jwtService.Verify(ids[0])
+	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(errors.ProceduralError{Message: "Failed finding user."})
 		return
@@ -143,35 +188,21 @@ func (c *controller) Resolve(w http.ResponseWriter, r *http.Request) {
 
 func (c *controller) Delete(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	claims := &Claims{}
 
-	if err := claims.decodeJwt(r); err != nil {
-		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(errors.ProceduralError{Message: "Not authenticated. This resource can not be accessed."})
-		return
-	}
-
-	var deleteId entity.DeleteUserInput
-
-	if err := json.NewDecoder(r.Body).Decode(&deleteId); err != nil {
+	ids, ok := r.URL.Query()["id"]
+	if !ok || len(ids) < 1 {
 		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(errors.ProceduralError{Message: "Failed reading request body."})
+		json.NewEncoder(w).Encode(errors.ProceduralError{Message: "Failed reading request"})
 		return
 	}
 
-	if !(claims.Admin || deleteId.Id == claims.Username) {
-		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(errors.ProceduralError{Message: "No permissions to delete this user"})
-		return
-	}
+	log.Println(ids[0])
 
-	if err := jwtService.DeleteUser(&entity.User{Id: deleteId.Id}); err != nil {
+	if err := jwtService.DeleteUser(&entity.User{Id: ids[0]}); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(errors.ProceduralError{Message: "Failed deleting user."})
 		return
 	}
-
-	c.Logout(w, r)
 }
 
 func (c *controller) ChangePassword(w http.ResponseWriter, r *http.Request) {

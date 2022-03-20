@@ -4,7 +4,7 @@ WHERE id = $1 LIMIT 1;
 
 -- name: CreateUser :one
 INSERT INTO users (
-    name, mail, password, admin
+    name, email, password, isAdmin
 ) VALUES (
           $1, $2, $3, $4
           )
@@ -16,7 +16,7 @@ WHERE id = $1;
 
 -- name: FindUser :one
 SELECT * FROM users
-WHERE name = $1 OR mail = $2 LIMIT 1;
+WHERE name = $1 OR email = $2 LIMIT 1;
 
 -- name: UpdateUser :exec
 UPDATE users

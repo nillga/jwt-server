@@ -8,12 +8,12 @@ import (
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (
-    name, mail, password, admin
+INSERT INTO mehms.users (
+    name, email, password, admin
 ) VALUES (
           $1, $2, $3, $4
           )
-RETURNING id, name, mail, password, admin
+RETURNING id, name, email, password, admin
 `
 
 type CreateUserParams struct {
@@ -42,7 +42,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 }
 
 const deleteUser = `-- name: DeleteUser :exec
-DELETE FROM users
+DELETE FROM mehms.users
 WHERE id = $1
 `
 
@@ -52,8 +52,8 @@ func (q *Queries) DeleteUser(ctx context.Context, id int64) error {
 }
 
 const findUser = `-- name: FindUser :one
-SELECT id, name, mail, password, admin FROM users
-WHERE name = $1 OR mail = $2 LIMIT 1
+SELECT id, name, email, password, admin FROM mehms.users
+WHERE name = $1 OR email = $2 LIMIT 1
 `
 
 type FindUserParams struct {
@@ -75,7 +75,7 @@ func (q *Queries) FindUser(ctx context.Context, arg FindUserParams) (User, error
 }
 
 const findUserById = `-- name: FindUserById :one
-SELECT id, name, mail, password, admin FROM users
+SELECT id, name, email, password, admin FROM mehms.users
 WHERE id = $1 LIMIT 1
 `
 

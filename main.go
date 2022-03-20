@@ -4,7 +4,7 @@ import (
 	"os"
 
 	"github.com/nillga/jwt-server/controller"
-	"github.com/nillga/jwt-server/http"
+	router "github.com/nillga/jwt-server/http"
 	"github.com/nillga/jwt-server/repository"
 	"github.com/nillga/jwt-server/service"
 )
@@ -13,7 +13,7 @@ var (
 	jwtRepo       repository.JwtRepository = repository.NewPostgresRepo()
 	jwtService    service.JwtService       = service.NewJwtService(jwtRepo)
 	jwtController controller.JwtController = controller.NewController(jwtService)
-	jwtRouter     http.Router              = http.NewVanillaRouter()
+	jwtRouter     router.Router            = router.NewVanillaRouter()
 )
 
 func main() {

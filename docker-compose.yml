@@ -9,6 +9,19 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
       POSTGRES_DB: postgres
+  gateway:
+    image: nillga/gate
+    ports:
+      - "8080:8080"
+    restart: always
+    environment:
+      USERS_HOST: "http://jwt:8000"
+      MEHMS_HOST: "http://mehms:8080"
+      PORT: ":8080"
+      JWT_SECRET_KEY: "asdf1234"
+    depends_on:
+      - jwt
+
   jwt:
     build: .
     ports:
@@ -24,3 +37,16 @@ services:
       JWT_SECRET_KEY: "asdf1234"
     depends_on:
       - postgres
+  mehms:
+    image: nillga/mehms
+    restart: always
+    ports:
+      - "3333:8080"
+    environment:
+      PG_HOST: "postgres"
+      PG_PORT: "5432"
+      PG_USER: "postgres"
+      PG_PASS: "password"
+      PG_DBNAME: "postgres"
+    depends_on:
+      - jwt
