@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/nillga/jwt-server/errors"
+	"github.com/rs/cors"
 )
 
 type vanillaRouter struct{}
@@ -55,8 +56,13 @@ func (v *vanillaRouter) PUT(uri string, f func(w http.ResponseWriter, r *http.Re
 }
 
 func (v *vanillaRouter) SERVE(port string) {
+	c := cors.New(cors.Options{
+		AllowedMethods: []string{"HEAD", "GET", "POST", "DELETE", "PUT"},
+        AllowedOrigins: []string{"*"},
+        AllowCredentials: true,
+    })
 	log.Println("Vanilla Server running on port " + port)
-	log.Fatalln(http.ListenAndServe(":"+port, vanillaDispatcher))
+	log.Fatalln(http.ListenAndServe(":"+port, c.Handler(vanillaDispatcher)))
 }
 
 func invalidMethod(w http.ResponseWriter, r *http.Request, method string) bool {
