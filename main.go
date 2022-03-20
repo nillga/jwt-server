@@ -18,7 +18,7 @@ var (
 
 func main() {
 	jwtRouter.POST("/signup", jwtController.SignUp)
-	jwtRouter.GET("/login", jwtController.Login)
+	jwtRouter.POST("/login", jwtController.Login)
 	jwtRouter.DELETE("/delete", jwtController.Delete)
 	jwtRouter.GET("/resolve", jwtController.Resolve)
 	jwtRouter.GET("/logout", jwtController.Logout)

@@ -13,11 +13,13 @@ services:
     image: nillga/gate
     ports:
       - "8080:8080"
+      - "1323:1323"
     restart: always
     environment:
       USERS_HOST: "http://jwt:8000"
       MEHMS_HOST: "http://mehms:8080"
       PORT: ":8080"
+      SWAG: ":1323"
       JWT_SECRET_KEY: "asdf1234"
     depends_on:
       - jwt
