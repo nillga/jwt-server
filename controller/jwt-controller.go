@@ -5,7 +5,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"time"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/nillga/jwt-server/entity"
@@ -17,8 +16,8 @@ type JwtController interface {
 	SignUp(w http.ResponseWriter, r *http.Request)
 	Login(w http.ResponseWriter, r *http.Request)
 	Resolve(w http.ResponseWriter, r *http.Request)
-	Logout(w http.ResponseWriter, r *http.Request)
 	Delete(w http.ResponseWriter, r *http.Request)
+	// deprecated
 	ChangePassword(w http.ResponseWriter, r *http.Request)
 }
 
@@ -50,7 +49,7 @@ func (c *controller) SignUp(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(errors.ProceduralError{Message: http.StatusText(http.StatusBadRequest)})
 		return
 	}
-	
+
 	if err := jwtService.ValidateInput(&signupData); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(errors.ProceduralError{Message: err.Error()})
@@ -63,40 +62,11 @@ func (c *controller) SignUp(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(errors.ProceduralError{Message: "Failed creating new user."})
 		return
 	}
-/*
-	claims := &Claims{
-		Username: user.Id,
-		Admin:    user.Admin,
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Hour * 2).Unix(),
-		},
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	tokenString, err := token.SignedString([]byte(secretKey))
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(errors.ProceduralError{Message: "Failed issuing JWT token"})
-		return
-	}
-
-	cookie := http.Cookie{
-		Name:    "jwt",
-		Value:   tokenString,
-		Expires: time.Now().Add(time.Hour * 2),
-		Path:    "/",
-	}
-
-	http.SetCookie(w, &cookie)
-*/
 	if err = json.NewEncoder(w).Encode(user); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(errors.ProceduralError{Message: "Invalid login data."})
 		return
 	}
-
-//	log.Println(cookie.Name, cookie.Value)
 }
 
 func (c *controller) Login(w http.ResponseWriter, r *http.Request) {
@@ -123,48 +93,6 @@ func (c *controller) Login(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(errors.ProceduralError{Message: "Invalid login data."})
 		return
 	}
-/*
-	claims := &Claims{
-		Username: user.Id,
-		Admin:    user.Admin,
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Hour * 2).Unix(),
-		},
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	tokenString, err := token.SignedString([]byte(secretKey))
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(errors.ProceduralError{Message: "Failed issuing JWT token"})
-		return
-	}
-
-	cookie := http.Cookie{
-		Name:    "jwt",
-		Value:   tokenString,
-		Expires: time.Now().Add(time.Hour * 2),
-		Path:    "/",
-	}
-
-	http.SetCookie(w, &cookie)
-	log.Println(cookie.Name, cookie.Value)
-	for k, v := range w.Header() {
-		log.Println(k, ":", v)
-	}
-	*/
-}
-
-func (c *controller) Logout(w http.ResponseWriter, r *http.Request) {
-	cookie := &http.Cookie{
-		Name:     "jwt",
-		Value:    "",
-		Expires:  time.Now().Add(-time.Hour),
-		HttpOnly: true,
-	}
-
-	http.SetCookie(w, cookie)
 }
 
 func (c *controller) Resolve(w http.ResponseWriter, r *http.Request) {

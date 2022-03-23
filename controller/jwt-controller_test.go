@@ -224,40 +224,6 @@ func TestController_Login_Fine(t *testing.T) {
 	assert.Equal(t, "1917", claims.Username)
 }
 
-func TestController_Logout(t *testing.T) {
-	stored, _ := bcrypt.GenerateFromPassword([]byte("dogecoin"), 14)
-
-	testService := service.NewJwtService(&mockRepo{users: []entity.User{
-		{Id: "1917", Username: "daniel", Email: "test@wierbicki.org", Password: stored},
-	}})
-
-	testController := NewController(testService)
-
-	logoutTest := testTable{
-		"Valid", http.MethodGet, []byte{}, http.StatusOK, "",
-	}
-
-	req, _ := http.NewRequest(logoutTest.method, "/logout", bytes.NewBuffer(logoutTest.input))
-	handler := http.HandlerFunc(testController.Logout)
-	response := httptest.NewRecorder()
-	handler.ServeHTTP(response, req)
-
-	if status := response.Code; status != logoutTest.statusCode {
-		t.Errorf("Received status %d but wanted %d", status, logoutTest.statusCode)
-	}
-
-	resp := response.Body.String()
-	assert.Equal(t, logoutTest.responseText, resp)
-	assert.NotNil(t, response.Result().Cookies())
-	assert.Equal(t, 1, len(response.Result().Cookies()))
-
-	cookie := response.Result().Cookies()[0]
-
-	assert.Equal(t, "jwt", cookie.Name)
-	assert.Equal(t, "", cookie.Value)
-	assert.True(t, cookie.Expires.Before(time.Now()))
-}
-
 func TestController_Resolve_Success(t *testing.T) {
 	stored, _ := bcrypt.GenerateFromPassword([]byte("dogecoin"), 14)
 
