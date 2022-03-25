@@ -19,7 +19,7 @@ var (
 func main() {
 	jwtRouter.POST("/signup", jwtController.SignUp)
 	jwtRouter.POST("/login", jwtController.Login)
-	jwtRouter.DELETE("/delete", jwtController.Delete)
+	jwtRouter.POST("/delete", jwtController.Delete)
 	jwtRouter.GET("/resolve", jwtController.Resolve)
 	jwtRouter.PUT("/changepass", jwtController.ChangePassword)
 

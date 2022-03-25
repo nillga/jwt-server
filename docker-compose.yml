@@ -3,8 +3,6 @@ services:
   postgres:
     image: postgres:14.1-alpine
     restart: always
-    ports:
-      - "5432:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
@@ -52,3 +50,17 @@ services:
       PG_DBNAME: "postgres"
     depends_on:
       - jwt
+  frontend:
+    image: nillga/frontend
+    restart: always
+    ports:
+      - "42069:80"
+    depends_on:
+      - gate-prox
+  gate-prox:
+    image: nillga/root_proxy
+    restart: always
+    ports:
+      - "420:80"
+    depends_on:
+      - gateway
