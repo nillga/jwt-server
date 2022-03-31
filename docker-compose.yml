@@ -7,12 +7,24 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
       POSTGRES_DB: postgres
+  api:
+    image: nillga/api-gateway
+    restart: always
+    ports:
+      - "1323:1323"
+    environment:
+      USERS_HOST: "http://jwt:8000"
+      MEHMS_HOST: "http://mehms:8080"
+      PORT: "8080"
+      SWAG: ":1323"
+      JWT_SECRET_KEY: "asdf1234"
+    depends_on:
+      - jwt
   gateway:
-    image: nillga/gate
+    image: nillga/frontend-gateway
+    restart: always
     ports:
       - "8080:8080"
-      - "1323:1323"
-    restart: always
     environment:
       USERS_HOST: "http://jwt:8000"
       MEHMS_HOST: "http://mehms:8080"
@@ -58,7 +70,7 @@ services:
     depends_on:
       - gate-prox
   gate-prox:
-    image: nillga/root_proxy
+    image: nillga/gateway
     restart: always
     ports:
       - "420:80"
