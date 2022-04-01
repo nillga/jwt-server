@@ -35,7 +35,7 @@ services:
       - jwt
 
   jwt:
-    build: .
+    image: nillga/users
     ports:
       - "8000:8000"
     restart: always
@@ -48,7 +48,7 @@ services:
       PORT: "8000"
       JWT_SECRET_KEY: "asdf1234"
     depends_on:
-      - postgres
+      - mehms
   mehms:
     image: nillga/mehms
     restart: always
@@ -61,7 +61,7 @@ services:
       PG_PASS: "password"
       PG_DBNAME: "postgres"
     depends_on:
-      - jwt
+      - postgres
   frontend:
     image: nillga/frontend
     restart: always

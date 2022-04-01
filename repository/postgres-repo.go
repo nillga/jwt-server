@@ -46,6 +46,9 @@ func NewPostgresRepo() JwtRepository {
 			Password: string(genesisPass),
 			Admin:    true,
 		}); err != nil {
+			if err == sql.ErrNoRows {
+				break
+			}
 			log.Println("No DB connection, retrying...")
 			db.Close()
 			time.Sleep(time.Second)

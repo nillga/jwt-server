@@ -8,11 +8,12 @@ import (
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO mehms.users (
+INSERT INTO public.users (
     name, email, password, admin
 ) VALUES (
           $1, $2, $3, $4
           )
+ON CONFLICT (name) DO NOTHING
 RETURNING id, name, email, password, admin
 `
 
