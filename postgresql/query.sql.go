@@ -42,7 +42,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 }
 
 const deleteUser = `-- name: DeleteUser :exec
-DELETE FROM mehms.users
+DELETE FROM public.users
 WHERE id = $1
 `
 
@@ -52,7 +52,7 @@ func (q *Queries) DeleteUser(ctx context.Context, id int64) error {
 }
 
 const findUser = `-- name: FindUser :one
-SELECT id, name, email, password, admin FROM mehms.users
+SELECT id, name, email, password, admin FROM public.users
 WHERE name = $1 OR email = $2 LIMIT 1
 `
 
@@ -75,7 +75,7 @@ func (q *Queries) FindUser(ctx context.Context, arg FindUserParams) (User, error
 }
 
 const findUserById = `-- name: FindUserById :one
-SELECT id, name, email, password, admin FROM mehms.users
+SELECT id, name, email, password, admin FROM public.users
 WHERE id = $1 LIMIT 1
 `
 
@@ -93,7 +93,7 @@ func (q *Queries) FindUserById(ctx context.Context, id int64) (User, error) {
 }
 
 const updateUser = `-- name: UpdateUser :exec
-UPDATE users
+UPDATE public.users
 SET password = $2 WHERE id = $1
 `
 

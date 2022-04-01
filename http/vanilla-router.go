@@ -57,11 +57,11 @@ func (v *vanillaRouter) PUT(uri string, f func(w http.ResponseWriter, r *http.Re
 
 func (v *vanillaRouter) SERVE(port string) {
 	c := cors.New(cors.Options{
-		AllowedMethods: []string{"HEAD", "GET", "POST", "DELETE", "PUT"},
-        AllowedOrigins: []string{"*"},
-        AllowCredentials: true,
-    })
-	log.Println("Vanilla Server running on port " + port)
+		AllowedMethods:   []string{"HEAD", "GET", "POST", "DELETE", "PUT"},
+		AllowedOrigins:   []string{"*"},
+		AllowCredentials: true,
+	})
+	log.Println("User Service is listening")
 	log.Fatalln(http.ListenAndServe(":"+port, c.Handler(vanillaDispatcher)))
 }
 

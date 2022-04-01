@@ -4,13 +4,14 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
+	"time"
 
 	_ "github.com/lib/pq"
 	"github.com/nillga/jwt-server/entity"
 	"github.com/nillga/jwt-server/postgresql"
-	migrate "github.com/rubenv/sql-migrate"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -18,39 +19,26 @@ type postgresRepo struct {
 	postgresUri string
 }
 
-var migrations = &migrate.FileMigrationSource{
-	Dir: "./sql/schema",
-}
-
-var initialized = false
 var initialUser = false
 
 func NewPostgresRepo() JwtRepository {
 	postgresUri := fmt.Sprintf("host=%s port=%s user=%s "+"password=%s dbname=%s sslmode=disable", os.Getenv("PG_HOST"), os.Getenv("PG_PORT"), os.Getenv("PG_USER"), os.Getenv("PG_PASS"), os.Getenv("PG_DBNAME"))
 
-	if !initialized {
+	for !initialUser {
 		db, err := sql.Open("postgres", postgresUri)
 		defer db.Close()
 		if err != nil {
-			panic(err)
-		}
-		fmt.Println("db connect successful")
-
-		if _, err = migrate.Exec(db, "postgres", migrations, migrate.Up); err != nil {
-			panic(err)
-		}
-		initialized = true
-	}
-	if !initialUser {
-		db, err := sql.Open("postgres", postgresUri)
-		defer db.Close()
-		if err != nil {
-			panic(err)
+			log.Println("No DB connection, retrying...")
+			time.Sleep(time.Second)
+			continue
 		}
 		ctx := context.Background()
 		genesisPass, err := bcrypt.GenerateFromPassword([]byte("btc"), 14)
 		if err != nil {
-			panic(err)
+			log.Println("No DB connection, retrying...")
+			db.Close()
+			time.Sleep(time.Second)
+			continue
 		}
 		if _, err = postgresql.New(db).CreateUser(ctx, postgresql.CreateUserParams{
 			Name:     "genesis_admin",
@@ -58,7 +46,10 @@ func NewPostgresRepo() JwtRepository {
 			Password: string(genesisPass),
 			Admin:    true,
 		}); err != nil {
-			panic(err)
+			log.Println("No DB connection, retrying...")
+			db.Close()
+			time.Sleep(time.Second)
+			continue
 		}
 		initialUser = true
 	}
