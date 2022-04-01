@@ -23,8 +23,6 @@ services:
   gateway:
     image: nillga/frontend-gateway
     restart: always
-    ports:
-      - "8080:8080"
     environment:
       USERS_HOST: "http://jwt:8000"
       MEHMS_HOST: "http://mehms:8080"
@@ -36,8 +34,6 @@ services:
 
   jwt:
     image: nillga/users
-    ports:
-      - "8000:8000"
     restart: always
     environment:
       PG_HOST: "postgres"
@@ -52,8 +48,6 @@ services:
   mehms:
     image: nillga/mehms
     restart: always
-    ports:
-      - "3333:8080"
     environment:
       PG_HOST: "postgres"
       PG_PORT: "5432"
