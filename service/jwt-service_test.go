@@ -1,5 +1,6 @@
 package service
-
+/*
+DEPRECATED
 import (
 	"errors"
 	"testing"
@@ -290,3 +291,4 @@ func TestService_NewPassword(t *testing.T) {
 		assert.Nil(t, testService.NewPassword(input))
 	})
 }
+*/

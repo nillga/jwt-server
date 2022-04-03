@@ -21,7 +21,8 @@ func main() {
 	jwtRouter.POST("/login", jwtController.Login)
 	jwtRouter.POST("/delete", jwtController.Delete)
 	jwtRouter.GET("/resolve", jwtController.Resolve)
-	jwtRouter.PUT("/changepass", jwtController.ChangePassword)
+	jwtRouter.POST("/elevate", jwtController.ToggleElevation)
+	jwtRouter.GET("/all", jwtController.All)
 
 	jwtRouter.SERVE(os.Getenv("PORT"))
 }

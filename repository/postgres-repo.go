@@ -176,3 +176,44 @@ func (p *postgresRepo) UpdateUser(id string, user *entity.User) error {
 		Password: string(user.Password),
 	})
 }
+
+func (p *postgresRepo) Elevate(id string) error {
+	db, err := sql.Open("postgres", p.postgresUri)
+	if err != nil {
+		return err
+	}
+
+	defer db.Close()
+	ctx := context.Background()
+
+	intId, err := strconv.ParseInt(id, 10, 64)
+	if err != nil {
+		return err
+	}
+
+	return postgresql.New(db).ElevateUser(ctx, intId)
+}
+
+func (p *postgresRepo) AllUsers() ([]*entity.User, error) {
+	db, err := sql.Open("postgres", p.postgresUri)
+	if err != nil {
+		return nil, err
+	}
+
+	defer db.Close()
+	ctx := context.Background()
+
+	users, err := postgresql.New(db).AllUsers(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var ret []*entity.User
+	for i := range users {
+		ret = append(ret, &entity.User{
+			Id: strconv.FormatInt(users[i].ID,10),
+			Username: users[i].Name,
+			Admin: users[i].Admin,
+		})
+	}
+	return ret, nil
+}

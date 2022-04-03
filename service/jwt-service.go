@@ -15,7 +15,9 @@ type JwtService interface {
 	CreateUser(input *entity.SignupInput) (*entity.User, error)
 	CheckUser(input *entity.LoginInput) (*entity.User, error)
 	DeleteUser(user *entity.User) error
+	ElevateUser(user *entity.User) error
 	NewPassword(passwords *entity.ChangePassInput) error
+	ShowAllUsers() ([]*entity.User, error)
 }
 
 type service struct{}
@@ -146,4 +148,15 @@ func (s *service) NewPassword(passwords *entity.ChangePassInput) error {
 	current.Password = password
 
 	return repo.UpdateUser(passwords.Id, current)
+}
+
+func (s *service) ElevateUser(user *entity.User) error {
+	if user.Id == "" {
+		return errors.New("no ID provided")
+	}
+	return repo.Elevate(user.Id)
+}
+
+func (s *service) ShowAllUsers() ([]*entity.User, error) {
+	return repo.AllUsers()
 }

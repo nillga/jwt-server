@@ -10,4 +10,6 @@ type JwtRepository interface {
 	FindById(id string) (*entity.User, error)
 	UpdateUser(id string, user *entity.User) error
 	Delete(id string) error
+	Elevate(id string) error
+	AllUsers() ([]*entity.User, error)
 }

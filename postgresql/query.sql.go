@@ -107,3 +107,41 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
 	_, err := q.db.ExecContext(ctx, updateUser, arg.ID, arg.Password)
 	return err
 }
+
+const elevateUser = `-- name: ElevateUser :exec
+UPDATE public.users 
+SET admin = NOT admin WHERE id = $1
+`
+
+
+func (q *Queries) ElevateUser(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, elevateUser, id)
+	return err
+}
+
+const getAllUsers = `-- name: AllUsers :many
+SELECT id, name, admin FROM public.users
+`
+
+func (q *Queries) AllUsers(ctx context.Context) ([]User, error) {
+	rows, err := q.db.QueryContext(ctx, getAllUsers)
+    if err != nil {
+        return nil, err
+    }
+    defer rows.Close()
+    var items []User
+    for rows.Next() {
+        var i User
+        if err := rows.Scan(&i.ID, &i.Name, &i.Admin); err != nil {
+            return nil, err
+        }
+        items = append(items, i)
+    }
+    if err := rows.Close(); err != nil {
+        return nil, err
+    }
+    if err := rows.Err(); err != nil {
+        return nil, err
+    }
+    return items, nil
+}

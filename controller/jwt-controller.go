@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 
 	"github.com/dgrijalva/jwt-go"
 	"github.com/nillga/jwt-server/entity"
@@ -17,8 +18,8 @@ type JwtController interface {
 	Login(w http.ResponseWriter, r *http.Request)
 	Resolve(w http.ResponseWriter, r *http.Request)
 	Delete(w http.ResponseWriter, r *http.Request)
-	// deprecated
-	ChangePassword(w http.ResponseWriter, r *http.Request)
+	ToggleElevation(w http.ResponseWriter, r *http.Request)
+	All(w http.ResponseWriter, r *http.Request)
 }
 
 type controller struct{}
@@ -133,30 +134,32 @@ func (c *controller) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (c *controller) ChangePassword(w http.ResponseWriter, r *http.Request) {
+func (c *controller) ToggleElevation(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	claims := &Claims{}
 
-	if err := claims.decodeJwt(r); err != nil {
-		w.WriteHeader(http.StatusUnauthorized)
-		json.NewEncoder(w).Encode(errors.ProceduralError{Message: "Not authenticated. This resource can not be accessed."})
+	if id, err := strconv.Atoi(r.URL.Query().Get("id")); err != nil || id < 1 {
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		json.NewEncoder(w).Encode(errors.ProceduralError{Message: r.URL.Query().Get("id") + " is not a valid ID"})
 		return
 	}
 
-	var next entity.ChangePassInput
-	if err := json.NewDecoder(r.Body).Decode(&next); err != nil {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(errors.ProceduralError{Message: err.Error()})
-		return
-	}
-
-	next.Id = claims.Username
-
-	if err := jwtService.NewPassword(&next); err != nil {
+	if err := jwtService.ElevateUser(&entity.User{Id: r.URL.Query().Get("id")}); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(errors.ProceduralError{Message: err.Error()})
+		json.NewEncoder(w).Encode(errors.ProceduralError{Message: "Failed elevating user."+err.Error()})
 		return
 	}
+}
+
+func (c *controller) All(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+
+	users, err := jwtService.ShowAllUsers()
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(errors.ProceduralError{Message: "Failed elevating user."})
+		return
+	}
+	json.NewEncoder(w).Encode(users)
 }
 
 func (c *Claims) decodeJwt(r *http.Request) error {

@@ -1,5 +1,6 @@
 package controller
-
+/*
+DEPRECATED
 import (
 	"bytes"
 	"encoding/base64"
@@ -519,3 +520,4 @@ func TestDecodeCookie(t *testing.T) {
 
 	assert.NotNil(t, testClaims.decodeJwt(req))
 }
+*/
